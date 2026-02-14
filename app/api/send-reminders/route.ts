@@ -13,7 +13,6 @@ const twilioClient = twilio(
 );
 
 export async function GET(request: Request) {
-  // Security: Check for cron secret
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
@@ -111,15 +110,3 @@ export async function GET(request: Request) {
     );
   }
 }
-```
-
-3. **Save** (Ctrl + S)
-
----
-
-### **Step 3: Add the Secret to .env.local**
-
-1. **Open** `.env.local`
-2. **Add this line at the bottom**:
-```
-CRON_SECRET=your-super-secret-key-12345
