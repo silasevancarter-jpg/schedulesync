@@ -24,7 +24,6 @@ export default function SignUpPage() {
     setError('');
 
     try {
-      // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -32,7 +31,6 @@ export default function SignUpPage() {
 
       if (authError) throw authError;
 
-      // 2. Create user record in database
       if (authData.user) {
         const { error: dbError } = await supabase
           .from('users')
@@ -48,7 +46,6 @@ export default function SignUpPage() {
         if (dbError) throw dbError;
       }
 
-      // Success! Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -118,7 +115,13 @@ export default function SignUpPage() {
             <input
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                let value = e.target.value;
+                if (value && !value.startsWith('+')) {
+                  value = '+' + value;
+                }
+                setPhone(value);
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="+1 (555) 123-4567"
             />
