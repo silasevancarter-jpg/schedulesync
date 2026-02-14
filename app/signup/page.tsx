@@ -46,7 +46,7 @@ export default function SignUpPage() {
         if (dbError) throw dbError;
       }
 
-      router.push('/dashboard');
+      router.push('/pricing');
     } catch (err: any) {
       setError(err.message);
     } finally {
