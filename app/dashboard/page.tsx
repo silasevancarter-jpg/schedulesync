@@ -29,33 +29,35 @@ export default function DashboardPage() {
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
+    
     if (!user) {
       router.push('/login');
       return;
     }
-    // Fetch user payment status
-    const { data: userData, error } = await supabase
+
+    const { data: userData } = await supabase
       .from('users')
-      .select('payment_status')
+      .select('subscription_status')
       .eq('id', user.id)
       .single();
-    if (error || !userData || userData.payment_status !== 'active') {
+
+    if (!userData || userData.subscription_status !== 'active') {
       router.push('/pricing');
       return;
     }
+
     setUser(user);
     loadAppointments(user.id);
   };
 
-
-  // Use business_id instead of user_id for multi-tenancy
-  const loadAppointments = async (businessId: string) => {
+  const loadAppointments = async (userId: string) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('appointments')
       .select('*')
-      .eq('business_id', businessId)
+      .eq('user_id', userId)
       .order('appointment_time', { ascending: true });
+
     if (!error && data) {
       setAppointments(data);
     }
@@ -64,12 +66,14 @@ export default function DashboardPage() {
 
   const handleAddAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+
     const { error } = await supabase
       .from('appointments')
       .insert([
         {
-          business_id: user.id, // Use user.id as business_id
+          user_id: user.id,
           customer_name: customerName,
           customer_phone: customerPhone,
           appointment_time: appointmentDateTime.toISOString(),
@@ -77,6 +81,7 @@ export default function DashboardPage() {
           status: 'scheduled',
         },
       ]);
+
     if (error) {
       alert('Error: ' + error.message);
     } else {
@@ -87,6 +92,24 @@ export default function DashboardPage() {
       setNotes('');
       setShowAddForm(false);
       loadAppointments(user.id);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    try {
+      const response = await fetch('/api/create-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const { url } = await response.json();
+      
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
@@ -108,9 +131,20 @@ export default function DashboardPage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">ScheduleSync Dashboard</h1>
-          <button onClick={handleLogout} className="text-sm text-gray-600 hover:text-gray-900">
-            Log Out
-          </button>
+          <div className="space-x-4">
+            <button
+              onClick={handleManageBilling}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Manage Billing
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -147,7 +181,13 @@ export default function DashboardPage() {
                     type="tel"
                     required
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    onChange={(e) => {
+                      let value = e.target.value;
+                      if (value && !value.startsWith('+')) {
+                        value = '+' + value;
+                      }
+                      setCustomerPhone(value);
+                    }}
                     className="w-full px-4 py-2 border rounded-lg"
                     placeholder="+15551234567"
                   />

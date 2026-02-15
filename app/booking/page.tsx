@@ -58,6 +58,8 @@ async function saveAppointment(data: any, business_id?: string) {
 
 
 // For demo: get business_id from query param (?business=BUSINESS_ID) or hardcode for now
+
+// No payment check here: customers can always book
 import { useSearchParams } from 'next/navigation';
 
 const BookingPage: React.FC = () => {
