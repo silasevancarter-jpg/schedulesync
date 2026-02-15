@@ -29,24 +29,33 @@ export default function DashboardPage() {
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
       router.push('/login');
       return;
     }
-
+    // Fetch user payment status
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('payment_status')
+      .eq('id', user.id)
+      .single();
+    if (error || !userData || userData.payment_status !== 'active') {
+      router.push('/pricing');
+      return;
+    }
     setUser(user);
     loadAppointments(user.id);
   };
 
-  const loadAppointments = async (userId: string) => {
+
+  // Use business_id instead of user_id for multi-tenancy
+  const loadAppointments = async (businessId: string) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('appointments')
       .select('*')
-      .eq('user_id', userId)
+      .eq('business_id', businessId)
       .order('appointment_time', { ascending: true });
-
     if (!error && data) {
       setAppointments(data);
     }
@@ -55,14 +64,12 @@ export default function DashboardPage() {
 
   const handleAddAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
-
     const { error } = await supabase
       .from('appointments')
       .insert([
         {
-          user_id: user.id,
+          business_id: user.id, // Use user.id as business_id
           customer_name: customerName,
           customer_phone: customerPhone,
           appointment_time: appointmentDateTime.toISOString(),
@@ -70,7 +77,6 @@ export default function DashboardPage() {
           status: 'scheduled',
         },
       ]);
-
     if (error) {
       alert('Error: ' + error.message);
     } else {
