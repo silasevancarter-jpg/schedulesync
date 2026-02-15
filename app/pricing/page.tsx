@@ -170,7 +170,7 @@ export default function PricingPage() {
             <button
               onClick={() => handleCheckout('price_1T0bnqE7L2UcgVS1OA1SQ9Lv', 'Business')}
               disabled={loading !== null}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-200 transition disabled:opacity-50"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading === 'Business' ? 'Loading...' : 'Choose Business'}
             </button>
